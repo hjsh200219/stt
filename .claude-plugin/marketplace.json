@@ -1,0 +1,14 @@
+{
+  "name": "stt",
+  "owner": {
+    "name": "SH Consulting",
+    "url": "https://github.com/hjsh200219"
+  },
+  "plugins": [
+    {
+      "name": "stt",
+      "source": "./",
+      "description": "Sync speech-to-text transcript notes from voice sources into a markdown knowledge vault. Source-adapter architecture — currently Naver Clova Note (reverse-engineered internal API, stealth ID/PW auto-login with guards, speaker-segmented transcript export)."
+    }
+  ]
+}

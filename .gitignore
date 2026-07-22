@@ -1,0 +1,10 @@
+config/.env
+__pycache__/
+*.pyc
+.venv/
+# 세션·프로필은 CLOVANOTE_HOME(기본 ~/.clovanote)에 저장돼 repo 밖.
+# 혹시 플러그인 내부에 두더라도 커밋 방지:
+user-data/
+*-session.json
+naver-clova/
+.omc/
