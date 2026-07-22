@@ -6,13 +6,16 @@
 ```
 stt/
 ├── .claude-plugin/{plugin.json, marketplace.json}
-├── skills/sync/SKILL.md          # /stt:sync — 소스-범용 커맨드
+├── skills/
+│   └── clovanote/SKILL.md         # /stt:clovanote — 소스별 커맨드
 ├── scripts/sources/
 │   └── clovanote/                 # 소스 어댑터 1 — 네이버 클로바노트
 │       ├── import.py              # 목록/적재 (stdlib urllib, 브라우저 0)
 │       └── login.py               # ID/PW 무인 로그인 (playwright, 가드·stealth)
 └── config/.env.example
 ```
+
+소스별로 스킬 1개 — 소스 추가 = `scripts/sources/<source>/` + `skills/<source>/` → `/stt:<source>`.
 
 ## 설치
 
@@ -24,8 +27,8 @@ Claude Code에서:
 /reload-plugins
 ```
 
-설치되면 스킬 목록에 `stt:sync` 가 뜬다. **커맨드는 `/stt:sync`** (플러그인 스킬은
-`plugin:skill` 네임스페이스라 bare `/stt` 아님).
+설치되면 스킬 목록에 `stt:clovanote` 가 뜬다. **커맨드는 `/stt:clovanote`** (플러그인
+스킬은 `plugin:skill` 네임스페이스라 bare `/stt` 아님).
 
 > 업데이트: 코드가 바뀌면 `plugin.json` 의 `version` 이 오른다. `/plugin` 으로
 > update 하거나, 캐시가 안 잡히면 `/plugin uninstall stt@stt` 후 재설치.
@@ -34,10 +37,9 @@ Claude Code에서:
 
 | 커맨드 | 동작 |
 |--------|------|
-| `/stt:sync` | 설정된 전 소스 동기화 (현재 = clovanote) |
-| `/stt:sync clovanote` | 클로바노트 노트를 vault(`CLOVANOTE_OUT`)에 적재 |
-| `/stt:sync clovanote list` | 노트 목록만 |
-| `/stt:sync clovanote auth` | 세션 로그인/갱신 |
+| `/stt:clovanote` | 클로바노트 노트를 vault(`CLOVANOTE_OUT`)에 적재 (최근 전체) |
+| `/stt:clovanote list` | 노트 목록만 |
+| `/stt:clovanote auth` | 세션 로그인/갱신 |
 
 세션이 만료되면(`import` 가 401) 커맨드가 자동으로 `login --auto` 재로그인 후 재시도한다.
 보호조치로 막히면 `--seed`(사람 개입)를 안내한다.
