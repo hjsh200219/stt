@@ -12,7 +12,8 @@ stt/
 │   └── clovanote/                 # 소스 어댑터 1 — 네이버 클로바노트
 │       ├── import.py              # 목록/적재 (stdlib urllib, 브라우저 0)
 │       └── login.py               # ID/PW 무인 로그인 (playwright, 가드·stealth)
-└── config/.env.example
+├── config/.env.example
+└── LICENSE                        # MIT
 ```
 
 소스별로 스킬 1개 — 소스 추가 = `scripts/sources/<source>/` + `skills/<source>/` → `/stt:<source>`.
@@ -85,7 +86,7 @@ python3 "$ROOT/login.py" --auto    # 2) 이후 무인
    에스컬레이션 경고, challenge 시 즉시 중단).
 
 콜드 프로필(시드 없이) 무인 로그인은 보호조치로 튕길 확률이 크다 — **반드시 seed 먼저.**
-로그인 성공 시 세션이 `CLOVANOTE_HOME/clovanote-session.json` 에 저장되고, 이후 `/stt:sync` 는
+로그인 성공 시 세션이 `CLOVANOTE_HOME/clovanote-session.json` 에 저장되고, 이후 `/stt:clovanote` 는
 브라우저 없이 그 세션으로 동작한다.
 
 ## 클로바노트 어댑터 — 재현한 내부 API
@@ -105,4 +106,8 @@ python3 "$ROOT/login.py" --auto    # 2) 이후 무인
 
 - 본인 계정·본인 데이터 export 용. 저속 요청·가드로 계정 보호(과도 호출 = 잠금 위험).
 - 크리덴셜(`.env`)·세션·프로필은 커밋 금지(`.gitignore` 처리 + `CLOVANOTE_HOME` 은 repo 밖).
-- 새 소스 추가: `scripts/sources/<source>/` 어댑터 + `skills/sync/SKILL.md` 표 1줄.
+- 새 소스 추가: `scripts/sources/<source>/` 어댑터 + `skills/<source>/SKILL.md`.
+
+## License
+
+MIT — see [LICENSE](./LICENSE).

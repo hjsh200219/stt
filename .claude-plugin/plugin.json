@@ -4,5 +4,6 @@
   "description": "STT/음성 소스의 전사 노트를 지식 vault(마크다운)로 동기화. 소스 어댑터 구조 — 현재 네이버 클로바노트.",
   "author": {
     "name": "SHC"
-  }
+  },
+  "license": "MIT"
 }
