@@ -53,18 +53,24 @@ PLUGIN_ROOT = os.environ.get(
 
 
 def _load_env():
-    """config .env(선택) 를 os.environ 에 로드. CLOVANOTE_ENV 또는 플러그인 config/.env."""
-    path = os.environ.get("CLOVANOTE_ENV") or os.path.join(PLUGIN_ROOT, "config", ".env")
-    try:
-        with open(os.path.expanduser(path), encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith("#") or "=" not in line:
-                    continue
-                k, v = line.split("=", 1)
-                os.environ.setdefault(k.strip(), v.strip())
-    except FileNotFoundError:
-        pass
+    """설정 .env 를 os.environ 에 로드(존재하는 것 전부, 앞선 파일 우선).
+    우선순위: CLOVANOTE_ENV > $CLOVANOTE_HOME/.env(기본 ~/.clovanote/.env) > 플러그인 config/.env."""
+    home = os.path.expanduser(os.environ.get("CLOVANOTE_HOME", "~/.clovanote"))
+    for path in (os.environ.get("CLOVANOTE_ENV"),
+                 os.path.join(home, ".env"),
+                 os.path.join(PLUGIN_ROOT, "config", ".env")):
+        if not path:
+            continue
+        try:
+            with open(os.path.expanduser(path), encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#") or "=" not in line:
+                        continue
+                    k, v = line.split("=", 1)
+                    os.environ.setdefault(k.strip(), v.strip())  # 앞선 파일 우선
+        except FileNotFoundError:
+            continue
 
 
 _load_env()
