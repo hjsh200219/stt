@@ -93,7 +93,7 @@ CHALLENGE_FRAGMENTS = ("nidlogin", "idSafetyRelease", "/login", "captcha", "otp"
 
 def load_credentials() -> tuple[str, str]:
     # _load_env() 가 CLOVANOTE_ENV/config .env 를 os.environ 에 이미 로드함.
-    nid = os.environ.get("NAVER_ID") or os.environ.get("c")  # `c` = 기존 워크스페이스 호환
+    nid = os.environ.get("NAVER_ID")
     npw = os.environ.get("NAVER_PW")
     if not nid or not npw:
         sys.exit("크리덴셜 없음: NAVER_ID + NAVER_PW 를 환경변수나 "
