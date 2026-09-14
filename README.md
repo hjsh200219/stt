@@ -1,7 +1,19 @@
-# stt — STT 소스 → 지식 vault 동기화 (Claude Code 플러그인)
+# stt — 클로바노트 · Apple 음성 메모 → 지식 Vault
 
-음성/STT 서비스의 **전사 노트를 마크다운 vault로 동기화**하는 Claude Code 플러그인.
-소스별 어댑터 구조 — 클로바노트는 여러 소스 중 하나다.
+클로바노트의 기존 전사를 가져오거나, Apple 음성 메모를 로컬에서 새로 전사해
+**Markdown 노트로 저장**하는 Claude Code 플러그인입니다. Obsidian 등 Markdown 기반 Vault와 사용할 수 있습니다.
+
+| 소스 | 처리 방식 | 필요한 준비 |
+|---|---|---|
+| 클로바노트 | 서비스에 이미 생성된 전사·화자 구분을 가져오기 | 네이버 로그인·클로바노트 노트 |
+| Apple 음성 메모 / 내보낸 음성 파일 | whisper.cpp로 이 Mac에서 새로 전사 | 로컬 녹음·ffmpeg·whisper-cli·GGML 모델 |
+
+Apple 전사는 녹음을 외부로 업로드하지 않습니다. **플러그인 설치만으로 전사 엔진과 모델까지 설치되지는 않습니다.**
+
+- [플러그인 설치](#설치)
+- [사용 명령](#사용법)
+- [Apple 음성 메모 설치·전사](#apple-음성-메모-v030)
+- [클로바노트 설정](#클로바노트-설정)
 
 ```
 stt/
@@ -30,8 +42,9 @@ Claude Code에서:
 /reload-plugins
 ```
 
-설치되면 스킬 목록에 `stt:clovanote` 가 뜬다. **커맨드는 `/stt:clovanote`** (플러그인
-스킬은 `plugin:skill` 네임스페이스라 bare `/stt` 아님).
+v0.3.0부터 `stt:clovanote`와 `stt:apple` 두 스킬을 제공합니다.
+플러그인 명령은 `/stt:clovanote`, `/stt:apple`입니다.
+bare `/stt apple`은 별도로 설정한 로컬 alias이며 이 플러그인 설치만으로 생기지 않습니다.
 
 > 업데이트: 코드가 바뀌면 `plugin.json` 의 `version` 이 오른다. `/plugin` 으로
 > update 하거나, 캐시가 안 잡히면 `/plugin uninstall stt@stt` 후 재설치.
@@ -43,17 +56,23 @@ Claude Code에서:
 | `/stt:clovanote` | 클로바노트 노트를 vault(`CLOVANOTE_OUT`)에 적재 (최근 전체) |
 | `/stt:clovanote list` | 노트 목록만 |
 | `/stt:clovanote auth` | 세션 로그인/갱신 |
+| `/stt:apple` | 발견된 로컬 녹음을 전사해 Markdown으로 저장 |
+| `/stt:apple list` | 녹음 파일 목록만 조회 (엔진·모델 불필요) |
+| `/stt:apple doctor` | 입력 경로·녹음 수·전사 엔진·모델 확인 |
 
-세션이 만료되면(`import` 가 401) 커맨드가 자동으로 `login --auto` 재로그인 후 재시도한다.
+내보낸 파일을 처리할 때는 “`/stt:apple`로 `/절대/경로/회의.m4a`를 전사해줘”처럼
+파일 경로를 함께 전달하세요. 아래 CLI 예시는 이 저장소 또는 설치된 플러그인의 루트에서 실행합니다.
+
+클로바노트 세션이 만료되면(`import` 가 401) 스킬이 `login --auto` 재로그인 후 재시도한다.
 보호조치로 막히면 `--seed`(사람 개입)를 안내한다.
 
-## 설정
+## 클로바노트 설정
 
 `~/.clovanote/.env` 를 만들어 값을 채운다(플러그인 업데이트에도 안 지워지는 안정 위치):
 
 ```bash
 mkdir -p ~/.clovanote
-cp "$(경로)/config/.env.example" ~/.clovanote/.env   # 또는 아래 내용 직접 작성
+cp -n config/.env.example ~/.clovanote/.env   # 저장소/플러그인 루트에서 실행, 기존 설정 보존
 ```
 
 ```ini
@@ -72,14 +91,13 @@ pip install playwright && playwright install chromium   # login 용 (import/list
 - `CLOVANOTE_HOME` — 세션·프로필·가드상태 홈. 기본 `~/.clovanote`(repo 밖).
 - `CLOVANOTE_ENV` — 설정 .env 경로 강제 지정.
 
-## 첫 로그인 (중요)
+## 클로바노트 첫 로그인 (중요)
 
 네이버는 순수 REST 로그인이 없다(RSA+봇탐지+CAPTCHA). 그래서:
 
 ```bash
-ROOT=<설치된 플러그인>/scripts/sources/clovanote
-python3 "$ROOT/login.py" --seed    # 1) 첫 로그인
-python3 "$ROOT/login.py" --auto    # 2) 이후 무인
+python3 scripts/sources/clovanote/login.py --seed    # 1) 첫 로그인
+python3 scripts/sources/clovanote/login.py --auto    # 2) 이후 무인
 ```
 
 1. **`--seed`** — 헤디드 브라우저가 뜨면 사람이 **아이디 보호조치/CAPTCHA/2FA 를 1회 직접
@@ -161,6 +179,19 @@ python3 scripts/sources/apple/import.py import --input-dir /path/to/exports --al
   접근 거부 시에는 실행 앱의 파일 접근 권한을 확인한다. iCloud 계정 로그인이나 설정 변경은 수행하지 않는다.
 
 검증: `python3 -m unittest discover -s tests -v`. 사용자 실제 녹음 없이 fixture로 실행할 수 있다.
+
+### 문제가 생겼을 때
+
+| 증상 | 확인할 사항 |
+|---|---|
+| 녹음 파일 없음 | Mac 음성 메모에 녹음이 다운로드되었는지 확인. 없으면 내보낸 파일을 `--file`로 지정 |
+| 로컬 모델 없음 / 엔진 설치 필요 | 최초 설치 절차 실행 후 `doctor`로 확인 |
+| 빈 파일 또는 최근 변경으로 보류 | 녹음·다운로드가 끝난 뒤 최소 60초 후 다시 실행 |
+| 기존 노트 수정으로 저장 거부 | 편집 내용을 보존한 상태입니다. 원본 노트를 덮지 말고 다른 `--out` 폴더에 재전사 |
+| 권한 오류 | 명시한 파일 경로와 실행 앱의 파일 접근 권한 확인 |
+
+현재 검증 범위는 회귀 테스트 17개와 한국어 합성 M4A의 실제 로컬 전사·중복 건너뛰기입니다.
+실제 사용자 음성 메모 라이브러리 수집은 녹음이 동기화된 환경에서 추가 확인이 필요합니다.
 
 ## License
 
