@@ -1,7 +1,7 @@
 {
   "name": "stt",
-  "version": "0.2.1",
-  "description": "STT/음성 소스의 전사 노트를 지식 vault(마크다운)로 동기화. 소스 어댑터 구조 — 현재 네이버 클로바노트.",
+  "version": "0.3.0",
+  "description": "클로바노트 전사 동기화 및 Apple 음성 메모·내보낸 녹음의 로컬 전사 → Markdown vault.",
   "author": {
     "name": "SHC"
   },

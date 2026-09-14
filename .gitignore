@@ -8,3 +8,6 @@ user-data/
 *-session.json
 naver-clova/
 .omc/
+# Apple transcripts/state belong outside this public repository.
+.apple-stt-state.json
+.apple-stt.lock
