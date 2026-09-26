@@ -1,6 +1,6 @@
 {
   "name": "stt",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "클로바노트 전사 동기화 및 Apple 음성 메모·내보낸 녹음의 로컬 전사 → Markdown vault.",
   "author": {
     "name": "SHC"

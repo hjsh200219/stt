@@ -81,11 +81,13 @@ SESSION_FILE = os.path.join(CLOVANOTE_HOME, "clovanote-session.json")
 VAULT_OUT = os.path.expanduser(
     os.environ.get("CLOVANOTE_OUT", os.path.join(CLOVANOTE_HOME, "notes")))
 
-# note-* 클라이언트 헤더. device/session-id 는 클라이언트 식별자(비밀 아님) —
-# 발굴 시 캡처한 값을 재사용한다. request-id 는 매 요청 nonce 로 새로 만든다.
+# note-* 클라이언트 헤더. device-id 는 클라이언트 식별자(비밀 아님) — 발굴 시 캡처한 값을
+# 재사용한다. session-id 는 워크스페이스별로 POST /v2/w/{ws}/sessions 가 발급하고 만료된다
+# (2026-09 확인 — 옛 고정값은 4011004 로 거부됨). ensure_note_session 이 발급·영속화한다.
+# request-id 는 매 요청 nonce 로 새로 만든다.
 NOTE_DEVICE_ID = "28e8fd37-e2a7-4522-bf0a-18ece49825ab"
 NOTE_SESSION_ID = "ef72ae87-c5eb-4c56-8399-024d4b1b74ebs"
-NOTE_CLIENT_VERSION = "26.5.2"
+NOTE_CLIENT_VERSION = "26.8.2"
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36")
 
@@ -167,6 +169,44 @@ def _headers(session: dict) -> dict:
     }
 
 
+def issue_note_session(session: dict, wsid: str) -> str:
+    """POST /v2/w/{ws}/sessions → 새 note-session-id. 웹 SPA 가 로그인 직후 보내는 요청 재현."""
+    body = {"deviceId": session.get("device_id", NOTE_DEVICE_ID), "deviceName": "mac/Chromium",
+            "force": True, "pushToken": "", "pushType": "FCM-WEB", "appType": "CLOVA_NOTE_WEB",
+            "loginDate": datetime.now(timezone.utc).isoformat(timespec="milliseconds")
+                                 .replace("+00:00", "Z")}
+    headers = _headers(session)
+    headers.pop("note-session-id")
+    headers["content-type"] = "application/json"
+    req = urllib.request.Request(f"{API}/v2/w/{wsid}/sessions", data=json.dumps(body).encode(),
+                                 headers=headers, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            contents = json.loads(r.read().decode("utf-8", "replace")).get("contents") or {}
+    except urllib.error.HTTPError as e:
+        if e.code in (401, 403):
+            raise SessionExpired(
+                "세션 만료(HTTP %d). 다시 로그인: python login.py --auto" % e.code)
+        raise RuntimeError(f"note 세션 발급 실패 HTTP {e.code}")
+    sid = contents.get("currentSessionId")
+    if not sid:
+        raise RuntimeError("note 세션 발급 응답에 currentSessionId 없음")
+    return sid
+
+
+def ensure_note_session(session: dict, wsid: str):
+    """저장된 note-session-id 가 워크스페이스 API 에 통하는지 보고, 거부되면 새로 발급해 저장."""
+    try:
+        api_get(session, f"/v2/w/{wsid}/folders", retries=1)
+        return
+    except SessionExpired:
+        pass
+    session["session_id"] = issue_note_session(session, wsid)
+    api_get(session, f"/v2/w/{wsid}/folders", retries=1)  # 새 세션도 401 이면 쿠키 만료 → SessionExpired
+    with open(SESSION_FILE, "w", encoding="utf-8") as f:
+        json.dump(session, f, ensure_ascii=False, indent=2)
+
+
 def api_get(session: dict, path: str, *, retries: int = 3) -> dict:
     """GET {API}{path} → contents. 실패 시 재시도, 인증 실패는 SessionExpired."""
     url = API + path
@@ -198,6 +238,7 @@ def resolve_workspace(session: dict) -> str:
     for w in wss:
         wid = w.get("workspaceId") or w.get("id") or w.get("wsId")
         if wid:
+            ensure_note_session(session, wid)
             return wid
     raise RuntimeError("워크스페이스를 찾지 못함 (/v2/user.workspaces 비어있음)")
 

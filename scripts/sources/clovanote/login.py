@@ -191,7 +191,7 @@ def validate_and_name(jar: dict) -> dict | None:
     rid = f"{int(time.time() * 1000)}_{uuid.uuid4().hex[:4]}_{uuid.uuid4().hex[:8]}"
     req = urllib.request.Request(f"{API}/v2/user", headers={
         "accept": "application/json", "note-client-type": "WEB",
-        "note-client-version": "26.5.2", "note-device-id": NOTE_DEVICE_ID,
+        "note-client-version": "26.8.2", "note-device-id": NOTE_DEVICE_ID,
         "note-session-id": NOTE_SESSION_ID, "note-request-id": rid,
         "referer": "https://clovanote.naver.com/", "user-agent": UA,
         "cookie": _cookie_header(jar)})

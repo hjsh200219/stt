@@ -116,6 +116,7 @@ python3 scripts/sources/clovanote/login.py --auto    # 2) 이후 무인
 | 용도 | 엔드포인트 |
 |------|-----------|
 | auth | NID_AUT/NID_SES 쿠키 + `note-*` 헤더 (Authorization/CSRF 없음) |
+| session | `POST /v2/w/{ws}/sessions` → `currentSessionId` = `note-session-id` 헤더. 워크스페이스 API(`/v2/w/...`)는 이게 없거나 만료면 401 `4011004` — `import.py` 가 자동 재발급·저장 |
 | user | `GET /v2/user` → `workspaces[]` |
 | list | `GET /v2/w/{ws}/notes?category=ALL&folderId=&sortKey=UPDATED-DATE&sortOrder=DESC&limit=N` |
 | note | `GET /v2/w/{ws}/notes/{id}` → `noteInfo`(메타) + `script.blockList`(전사) |
