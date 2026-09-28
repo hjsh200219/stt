@@ -229,6 +229,9 @@ def _paste_into(page, selector: str, value: str):
 
 
 def _click_login(page):
+    # 로그인 상태 유지 — 안 켜면 NID_AUT·NID_SES 가 세션 쿠키로 나와 몇 시간 만에 끊긴다(2026-09-28).
+    page.evaluate("() => { const c = document.querySelector('#loginStay');"
+                  " if (c && !c.checked) document.querySelector('label[for=loginStay]')?.click(); }")
     # 현재 네이버 로그인 DOM(2026): 반응형 이중 레이아웃 #loginBtn_column(PC)/#loginBtn_row.
     # 둘 다 button.btn_done 이고 텍스트 "로그인"(패스키 버튼과 구분). 보이는 쪽을 클릭.
     for sel in ("#loginBtn_column", "#loginBtn_row"):
@@ -327,6 +330,27 @@ def do_login(seed: bool, headless: bool, on_attempt=None) -> str:
 
 # ------------------------------ CLI ------------------------------
 
+# 계정당 로그인 장소는 한 곳이다(2026-09-28). inter349 의 정본 로그인은 9224 브라우저이고
+# `shconsulting/scripts/naver-blog/relogin.mjs` 가 그 쿠키를 workspace .env 의 NAVER_COOKIE 로 옮겨 둔다.
+# 여기서 비번 로그인을 따로 하면 같은 계정 로그인 횟수가 늘어 네이버가 위장 거절 → 보안문자 →
+# 아이디 보호조치로 올린다(같은 날 실제로 걸렸다). 그래서 로그인 전에 그 쿠키부터 빌린다.
+SHARED_COOKIE_ENV = os.path.expanduser("~/workspace/.env")
+
+
+def borrow_shared_cookie() -> dict | None:
+    """workspace .env 의 NAVER_COOKIE 가 살아 있으면 clovanote 세션으로 저장하고 유저정보를 돌려준다."""
+    try:
+        with open(SHARED_COOKIE_ENV, encoding="utf-8") as f:
+            raw = next((l.split("=", 1)[1].strip().strip('"\'') for l in f if l.startswith("NAVER_COOKIE=")), "")
+    except FileNotFoundError:
+        return None
+    jar = dict(p.strip().split("=", 1) for p in raw.split(";") if "=" in p)
+    user = validate_and_name(jar)
+    if user:
+        save_session(jar, cdp_url="borrowed:NAVER_COOKIE")
+    return user
+
+
 def main():
     ap = argparse.ArgumentParser(description="네이버 ID/PW 자동 로그인 → clovanote 세션")
     ap.add_argument("--auto", action="store_true", help="무인(가드·챌린지중단)")
@@ -335,6 +359,11 @@ def main():
     args = ap.parse_args()
     if not (args.auto or args.seed):
         sys.exit("--auto 또는 --seed 중 하나를 지정하세요.")
+
+    user = borrow_shared_cookie()
+    if user:
+        print(f"공유 세션(NAVER_COOKIE) 차용 OK — {user.get('userName', '?')} · 로그인 안 함")
+        return
 
     if args.seed:
         # 시드는 가드 없이 사람 감독 하에 실행 (헤디드)
