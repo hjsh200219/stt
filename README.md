@@ -169,7 +169,7 @@ python3 scripts/sources/apple/import.py import --input-dir /path/to/exports --al
 | `APPLE_STT_MODEL` | `~/.local/share/stt/models/ggml-small.bin` |
 
 - 한국어 기본(`--language ko`), 다국어 자동 감지 `--language auto`.
-- `.m4a`, `.wav`, `.mp3`, `.aac`, `.aiff`, `.aif`, `.flac`, `.caf` 지원. ffmpeg로 PCM WAV 임시 변환.
+- `.m4a`, `.qta`, `.wav`, `.mp3`, `.aac`, `.aiff`, `.aif`, `.flac`, `.caf` 지원. ffmpeg로 PCM WAV 임시 변환.
 - 원본 변경 시 재전사, 동일 내용 건너뜀, 출력 폴더 단위 잠금, 실패 건 재시도 가능.
 - 수동 수정한 노트는 `--force`여도 덮어쓰지 않는다. 원본 삭제를 Vault에 전파하지 않는다.
 - 처리 이력 `.apple-stt-state.json`과 잠금 파일은 출력 폴더에 둔다. 개인 노트/이력은 public repo에 넣지 않는다.
@@ -191,8 +191,8 @@ python3 scripts/sources/apple/import.py import --input-dir /path/to/exports --al
 | 기존 노트 수정으로 저장 거부 | 편집 내용을 보존한 상태입니다. 원본 노트를 덮지 말고 다른 `--out` 폴더에 재전사 |
 | 권한 오류 | 명시한 파일 경로와 실행 앱의 파일 접근 권한 확인 |
 
-현재 검증 범위는 회귀 테스트 17개와 한국어 합성 M4A의 실제 로컬 전사·중복 건너뛰기입니다.
-실제 사용자 음성 메모 라이브러리 수집은 녹음이 동기화된 환경에서 추가 확인이 필요합니다.
+회귀 테스트 18개와 한국어 합성 M4A의 로컬 전사·중복 건너뛰기를 확인했습니다.
+동기화된 실제 Apple 음성 메모 `.qta`(약 11분)도 로컬 전사·Markdown 저장·재실행 중복 건너뛰기를 확인했습니다.
 
 ## License
 

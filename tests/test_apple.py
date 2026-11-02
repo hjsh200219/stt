@@ -52,6 +52,15 @@ class AppleTestCase(unittest.TestCase):
 
 
 class DiscoverTests(AppleTestCase):
+    def test_discover_accepts_qta_recordings_as_files_and_in_libraries(self):
+        audio = self.touch_audio("Recordings/new-recording.QTA")
+
+        self.assertEqual(apple.discover([audio], explicit=True), [audio.resolve()])
+        self.assertEqual(
+            apple.discover([self.base / "Recordings"], explicit=True),
+            [audio.resolve()],
+        )
+
     def test_discover_finds_audio_and_skips_deleted_dirs_symlinks_and_duplicates(self):
         keep = self.touch_audio("Recordings/keep.m4a")
         self.touch_audio("Recordings/Deleted/old.m4a")

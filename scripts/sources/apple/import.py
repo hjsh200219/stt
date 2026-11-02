@@ -18,7 +18,7 @@ import tempfile
 import time
 from datetime import datetime, timezone
 
-AUDIO = {'.m4a', '.wav', '.mp3', '.aac', '.aiff', '.aif', '.flac', '.caf'}
+AUDIO = {'.m4a', '.qta', '.wav', '.mp3', '.aac', '.aiff', '.aif', '.flac', '.caf'}
 HOME = Path.home()
 DEFAULT_MODEL = HOME / '.local/share/stt/models/ggml-small.bin'
 DEFAULT_OUT = HOME / '.stt/apple/notes'
